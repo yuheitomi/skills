@@ -1,15 +1,11 @@
 ---
 name: setup-react-app-config
-description: Set up configuration files for React projects (Vite-plus, Shadcn/UI)
-allowed-tools:
-  - Read(*)
-  - Write(*)
-  - WebFetch(*)
+description: Set up configuration files for React projects (Vite-plus, Shadcn/UI, pnpm). Use when the user asks to scaffold or configure a React app's build, lint, format, test, package manager, or UI component setup.
 ---
 
-# Instruction
+# Set up React app configuration
 
-Your task is to set up and complete configurations for the project to reflect the user's preferences referring to provided instruction details and template files.
+Set up and complete configurations for the project to reflect the user's preferences, referring to the provided instruction details and template files.
 
 ## Steps to follow
 

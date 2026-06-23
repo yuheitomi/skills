@@ -1,28 +1,27 @@
 ---
 name: commit
-description: Commits changes in logical chunks with proper commit messages
-argument-hint: "[target-branch]"
-allowed-tools: Bash(git add:*), Bash(git status:*), Bash(git commit:*), Bash(git log:*), Bash(git diff:*), Bash(git ls-files:*)
-disable-model-invocation: true
+description: Commits changes in logical chunks with proper commit messages. Use when the user asks to commit modified files, stage and commit work, or split changes into conventional commits.
 ---
 
-Please help me commit my changes. Here's what I need you to do:
+# Commit changes
 
-1. First, check the current git status to see what files have been modified
-2. Check the current branch name before committing
-3. If the current branch is `main` or `master`, warn the user before committing and ask whether to proceed
+Commit the user's changes in logical chunks with conventional commit messages. Follow these steps:
+
+1. Check the current git status to see what files have been modified.
+2. Check the current branch name before committing.
+3. If the current branch is `main` or `master`, warn the user before committing and ask whether to proceed.
 4. Analyze the changes and group them into logical commits when necessary, based on:
    - File types (tests, docs, config, etc.)
    - Feature areas (by directory/module)
    - Purpose of changes
-5. If the commit chunks are clear and low-risk, proceed without asking the user to confirm the chunks
+5. If the commit chunks are clear and low-risk, proceed without asking the user to confirm the chunks.
 6. Ask the user to confirm the proposed chunks before committing when:
    - The changes include unrelated kinds of work
    - The intended grouping is uncertain
    - A change looks risky, surprising, or outside the expected scope
-7. Create separate commits for each logical group with appropriate commit messages following conventional commit format
-8. Run typecheck or lint commands (if available in package.json) before committing to ensure code quality
-9. If '$ARGUMENTS' is provided, use it as the target branch name (otherwise default to 'main')
+7. Create separate commits for each logical group with appropriate commit messages following conventional commit format.
+8. Run typecheck or lint commands (if available in `package.json`) before committing to ensure code quality.
+9. If the user provided a target branch as input, use it; otherwise default to `main`.
 
 ## git commit-prefixes:
 
