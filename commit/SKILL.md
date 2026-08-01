@@ -1,6 +1,7 @@
 ---
 name: commit
 description: Commits changes in logical chunks with proper commit messages. Use when the user asks to commit modified files, stage and commit work, or split changes into conventional commits.
+context: fork
 ---
 
 # Commit changes

@@ -1,6 +1,7 @@
 ---
 name: create-pr
 description: Commits changes in logical chunks and creates a pull request. Use when the user asks to open a PR, push their work and create a pull request, or commit and submit changes for review.
+context: fork
 ---
 
 # Create a pull request
