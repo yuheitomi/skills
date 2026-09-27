@@ -1,0 +1,14 @@
+# package                       verified-version   [hold: reason — reported as HOLD, not DRIFT]
+@tanstack/react-start           1.168.58
+@tanstack/devtools-vite         0.8.5
+@tanstack/cli                   0.71.0
+@cloudflare/vite-plugin         1.60.2
+@cloudflare/vitest-plugin       1.2.8
+wrangler                        4.141.0
+@vitejs/plugin-react            6.1.1
+@vitejs/plugin-rsc              0.5.35
+@tailwindcss/vite               4.3.3
+typescript                      7.0.2
+vite-plus                       0.3.3     hold: 1.0 bundles vitest 5; @cloudflare/vitest-plugin needs vitest ^4.1 (workers-sdk#15618)
+@voidzero-dev/vite-plus-core    0.3.3     hold: must equal vite-plus
+vitest                          4.1.11    hold: must equal vite-plus's bundled vitest (`vp toolchain vitest`)

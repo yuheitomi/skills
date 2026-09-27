@@ -1,0 +1,13 @@
+# package                       verified-version   [hold: reason — reported as HOLD, not DRIFT]
+react-router                    8.4.0
+@react-router/dev               8.4.0
+create-react-router             8.4.0
+react-router-auto-routes        1.0.0
+@cloudflare/vite-plugin         1.60.2
+@cloudflare/vitest-plugin       1.2.8
+wrangler                        4.141.0
+@tailwindcss/vite               4.3.3
+typescript                      7.0.2
+vite-plus                       0.3.3     hold: 1.0 bundles vitest 5; @cloudflare/vitest-plugin needs vitest ^4.1 (workers-sdk#15618)
+@voidzero-dev/vite-plus-core    0.3.3     hold: must equal vite-plus
+vitest                          4.1.11    hold: must equal vite-plus's bundled vitest (`vp toolchain vitest`)
