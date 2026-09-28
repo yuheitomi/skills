@@ -9,8 +9,8 @@ Create a new GitHub issue in the current repository using the `gh` CLI. Follow t
 
 1. Use the user's input as the basis for the issue body.
 2. Explore the codebase to gather more context about the issue.
-3. Create a new issue in the current repository, enhancing the issue content with the additional context and an appropriate title.
-4. Ask the user to review the issue content and make any necessary changes.
-5. Output the created issue URL for reference.
+3. Draft the issue with an appropriate title, enriching the body with the context you found.
+4. Show the draft to the user and apply their changes before creating it.
+5. Create the issue and output its URL.
 
 Reference: [Creating an issue](https://docs.github.com/en/issues/tracking-your-work-with-issues/creating-an-issue)
