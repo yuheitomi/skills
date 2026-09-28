@@ -20,11 +20,12 @@ Commit the user's changes in logical chunks with conventional commit messages. F
    - The changes include unrelated kinds of work
    - The intended grouping is uncertain
    - A change looks risky, surprising, or outside the expected scope
-7. Create separate commits for each logical group with appropriate commit messages following conventional commit format.
-8. Run typecheck or lint commands (if available in `package.json`) before committing to ensure code quality.
-9. If the user provided a target branch as input, use it; otherwise default to `main`.
+7. Run typecheck or lint commands (if available in `package.json`) before committing to ensure code quality.
+8. Create separate commits for each logical group with appropriate commit messages following conventional commit format.
 
 ## git commit-prefixes:
+
+If the repository defines its own commit prefixes (e.g. in `AGENTS.md` or `CLAUDE.md`), use those instead.
 
 - feat: "Adding new features or modifying functionality"
 - fix: "Bug fixes or typo corrections"
@@ -34,6 +35,7 @@ Commit the user's changes in logical chunks with conventional commit messages. F
 - test: "Adding or modifying tests"
 - build: "Changes affecting build system or dependencies"
 - ci: "Changes related to CI/CD"
+- perf: "Performance improvements"
 - security: "Security-related changes"
 - docker: "Modifications to Dockerfile or container-related changes"
 - chore: "Miscellaneous changes"
