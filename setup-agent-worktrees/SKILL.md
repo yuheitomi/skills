@@ -34,7 +34,9 @@ Prefer simple native configuration for simple file copying. Where commands or da
 
 The helper accepts repeatable `--env`, `--sqlite`, and `--optional-file` arguments containing exact repository-relative paths. It rejects path traversal and symlinks, preserves existing destinations, and fails for missing required files. Optional files may be absent. It copies env files with private permissions and creates SQLite snapshots through the backup API. `--dry-run` reports paths and operations without copying. It does not install dependencies, rewrite env values, or initialize databases.
 
-Run it through an available Python runtime; use `uv run` when the repository requires uv. Do not install packages into system Python. Do not introduce a new runtime silently if the repository lacks it; explain the requirement or implement equivalent behavior with existing tools.
+Run it through an available Python runtime; use `uv run` when the repository requires uv. Do not install packages into system Python. Do not introduce a new runtime silently if the repository lacks it; explain the requirement or implement equivalent behavior with existing tools (for example, a small Node script in a JavaScript repository that needs no SQLite snapshots).
+
+When an agent hook triggers setup, the helper alone is not enough. A repository wrapper (or the equivalent script) must also no-op in the main checkout, skip work already done, run the selected install and initialization commands, and retry after a failure. See the Claude adapter for the details.
 
 Example invocation (replace files and roots with the user's selections):
 
@@ -44,7 +46,7 @@ uv run scripts/setup_worktree.py \
   --env .env.local --sqlite app.db
 ```
 
-Preserve local files when setup runs again. Required missing files should fail clearly; optional files should report a skip. Copy secrets as files, never embed their contents into committed configuration. Ensure selected secrets, snapshots, and temporary backup artifacts remain ignored. Merge ignore rules narrowly, retaining tracked env examples. For SQLite, do not copy `-wal` and `-shm` independently or add a live database to Claude's native include list; use a consistent snapshot. Other engines need their own supported dump/restore workflow, not this helper.
+Preserve local files when setup runs again. Required missing files should fail clearly; optional files should report a skip. Copy secrets as files, never embed their contents into committed configuration. Ensure selected secrets, snapshots, and temporary backup artifacts remain ignored. Merge ignore rules narrowly, retaining tracked env examples. For SQLite, do not copy `-wal` and `-shm` independently or add a live database to Claude's native include list; use a consistent snapshot. Other engines need their own supported dump/restore workflow, not this helper. Emulator state such as Wrangler/Miniflare's `.wrangler/state` spreads one app's data across several hash-named SQLite files plus blob directories (D1, R2, KV, Durable Objects); a per-file snapshot is not a consistent copy. Prefer initializing it with the project's migration command, and explain that test accounts or data then need to be recreated.
 
 Check the runtime database URL and launch commands for isolation. An env file pointing at remote Turso or a fixed localhost port is not made isolated by copying a DB file. If needed, agree on worktree-local URLs and distinct ports; persist adjustments in the destination without altering the source or logging secrets. Do not launch a database or dev server merely to validate config.
 
@@ -56,4 +58,4 @@ Parse edited configuration and check the intended changes against the original. 
 
 Separate helper verification from native integration: report whether each selected agent actually triggered setup. A manually executed helper does not prove the agent lifecycle works. If app integration cannot be exercised, preserve the artifacts and state that limitation.
 
-Deliver the changed paths, selected behavior, validation results, and any required app UI step. Do not commit or push unless requested.
+Deliver the changed paths, selected behavior, validation results, and any required app UI step. State when native setup only takes effect after the configuration reaches the branch new worktrees are created from. Do not commit or push unless requested.
