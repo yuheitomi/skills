@@ -1,16 +1,20 @@
-# Claude Code CLI and desktop
+# Claude Code (CLI and desktop)
 
-Official references:
-- https://code.claude.com/docs/en/worktrees
-- https://code.claude.com/docs/en/hooks
-- https://code.claude.com/docs/en/desktop
+Docs: [worktrees](https://code.claude.com/docs/en/worktrees) · [hooks](https://code.claude.com/docs/en/hooks) · [desktop](https://code.claude.com/docs/en/desktop)
 
-For simple env/local-file copies, use the root `.worktreeinclude`. It uses `.gitignore` syntax and copies only matching gitignored files for Claude-created Git worktrees. Use exact selected paths, preserve existing entries, and check ignored-directory pattern behavior in current documentation. This is a file-copy mechanism, not a command hook. It cannot guarantee a consistent snapshot of a database being written.
+## Mechanisms
 
-For dependency commands or SQLite backups, use a documented lifecycle hook or an explicit repository setup command. Before generating a hook, check its current input schema and timing. A SessionStart hook may initialize the destination when the session starts; it must positively identify a separate worktree, no-op in the source checkout, and preserve local state when sessions resume. Verify it covers the user's CLI/desktop creation flow. Read the hook JSON's cwd for the current destination; `CLAUDE_PROJECT_DIR` may continue pointing at the original project when a session enters a worktree, so do not use it as the destination. Resolve the source from supported context or the user's configured source, validating that it is a distinct checkout of the same repository. Do not select an arbitrary first worktree as the source.
+- **`.worktreeinclude`** (repo root, `.gitignore` syntax): copies matching *gitignored* files into Claude-created worktrees. File copy only — no commands, no consistent DB snapshot.
+- **Hooks** in `.claude/settings.json` (e.g. `SessionStart`) can run setup commands. Hook stdin JSON includes `cwd`. `SessionStart` stdout is added to Claude's context, so diagnostics belong on stderr.
+- **`WorktreeCreate`** replaces worktree creation entirely: the hook must create the worktree itself and print only its absolute path on stdout; `.worktreeinclude` is not processed then. Only worth it if the user wants custom creation.
 
-Do not claim SessionStart runs whenever a running session enters a worktree; verify a documented event for that flow or supply an explicit setup command. Copy the shared helper into the repository and invoke it only after the actual source and destination have been established. Avoid duplicate copy operations if `.worktreeinclude` already handles a selected file.
+## Observed behavior (verify against current docs)
 
-`WorktreeCreate` replaces default worktree creation entirely. Use it only if the user chooses custom creation; then the hook must create the worktree, perform setup, and print only its final absolute path on stdout, with diagnostics on stderr. `.worktreeinclude` is not processed in this mode. Review WorktreeRemove semantics before changing cleanup; do not add automatic destructive cleanup merely to perform setup.
+- Sessions started in a worktree (`--worktree`, desktop worktree sessions) read `.claude/settings.json` from the worktree's checkout, and `$CLAUDE_PROJECT_DIR` is the worktree. After `EnterWorktree` mid-session, `$CLAUDE_PROJECT_DIR` remains the original project — the stdin `cwd` is the reliable destination.
+- `SessionStart` did not fire when a running session entered a worktree via `EnterWorktree`. `CwdChanged` exists but wasn't confirmed for that flow and fires on every directory change. A manual setup command is a sensible fallback.
+- New worktrees branch from `origin/<default branch>` by default (`worktree.baseRef: "fresh"`), so uncommitted hooks don't run — and fail silently (visible only in the debug log).
+- A linked worktree has `git rev-parse --git-dir` ≠ `--git-common-dir`; the main worktree is the first entry of `git worktree list --porcelain`. The git dir is a private place for per-worktree markers/locks.
 
-Merge hooks in `.claude/settings.json` or the user's chosen local scope without changing permission rules. Copy `.claude/settings.local.json` only when selected; it may contain user-specific hooks or permissions. When reliable automation is unavailable for the chosen flow, deliver an explicit setup invocation and explain that it is manual.
+## Testing native integration
+
+`claude -p --worktree <name> --settings "$PWD/.claude/settings.json" --debug-file <log> "Reply with ok"` creates a worktree and runs hooks from the given settings; reusing the name reopens it. Uncommitted helper scripts must be copied into the worktree first. Grep the log for the hook result. Worktrees from `-p` runs stay locked — clean up yours with `git worktree unlock`, `git worktree remove --force`, `git branch -D worktree-<name>`.
