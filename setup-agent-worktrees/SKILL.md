@@ -1,61 +1,53 @@
 ---
 name: setup-agent-worktrees
-description: Create or update repository worktree setup for Codex desktop, Claude Code, and Cursor. Ask which agents and interfaces to support, which ignored env files to copy, whether to snapshot local databases, and which setup commands to run.
+description: Create or update repository worktree setup for Codex desktop, Claude Code, and Cursor so new agent worktrees are ready to work in — local env files, dependencies, local databases, and other setup the project actually needs. Use when the user wants agent worktrees to start with a working environment.
 ---
 
 # Set up agent worktrees
 
-Configure future worktrees for the selected agents. Inspect the repository first, ask only for choices not already supplied, then implement and verify the selected setup. This skill configures repositories; it does not install agents or change global permissions.
+**Goal:** a worktree created by the user's coding agents should be ready to work in — dependencies installed, needed local files present, local data isolated from the main checkout — without manual steps, and without leaking secrets or disturbing the source checkout.
 
-## Inspect and choose
+There is no fixed recipe. Study the project, decide what "ready" means for it, and pick the lightest mechanism that achieves it. This skill configures the repository; it does not install agents or change global permissions.
 
-Read repository instructions and existing worktree documentation. Inspect agent configuration, ignore rules, dependency scripts, and database launch commands. Discover env and database filenames without printing secret values or database records. Check whether configuration is tracked, generated, or local. Retain existing hooks, actions, settings, and unrelated files.
+## Understand the project first
 
-Ask a compact set of questions, offering concrete detected paths:
+Work out how a fresh clone of this project becomes runnable: read its instructions, manifests, lockfiles, scripts, ignore rules, and any existing worktree tooling or agent configuration. Typical concerns — weigh them against what the project actually has:
 
-- Agents and interfaces: Codex desktop, Claude Code CLI/desktop, Cursor IDE/Agents Window/CLI. Distinguish Codex desktop from CLI; do not promise desktop environment hooks for CLI.
-- Env files: copy which exact files, or skip? Suggest development files; do not automatically select every `.env*` file. Explain any local-versus-remote database mode implied by the selected file without exposing credentials.
-- Local databases: skip (default), independent snapshot, or initialize an empty database? For snapshots, select source paths and identify the actual engine. For initialization, agree on the existing initialization command. Never substitute a shared database or symlink for a snapshot.
-- Other setup: dependency installation, optional local settings, and any requested build or initialization commands. Detect the package manager from repository instructions, manifests, and lockfiles. Ask about supported operating systems when it affects implementation.
+- Dependencies and the toolchain/package manager the project already uses.
+- Gitignored local files a checkout needs (env files, local settings) — distinguish dev files from ones pointing at shared or production resources.
+- Local data: does the app use a local database or emulator state, and should a worktree get a snapshot, a freshly initialized one, or nothing?
+- Isolation: a copied file is not isolated if the env still points at a remote DB, a fixed port, or a shared path.
+- Existing setup (hooks, wtp/other managers, scripts) to build on rather than duplicate.
 
-Honor existing answers; do not ask again. Show the chosen paths and commands before applying them as a brief implementation summary. Proceed within the requested scope; additional approval is only needed for an unresolved choice or an operation requiring it. Do not include migrations, resets, service startup, or remote DB changes unless requested.
+Ask the user only what you can't decide from the repo — usually which agents/interfaces they use and which secrets or data to carry over — offering the concrete options you found. Briefly state the plan before applying it.
 
-## Implement
+## Constraints
 
-Read only the selected adapters:
+- Never print, log, or commit secret values or database records. Copy secrets as files; keep them (and snapshots) gitignored.
+- Don't run migrations, resets, remote DB changes, or start services unless the user asked.
+- Merge into existing configuration; keep unrelated hooks, settings, and files.
+- Generated config must not depend on this skill's install path — anything it needs lives in the repo.
+- Don't introduce a new runtime the project doesn't already use without saying so.
+- Don't commit or push unless asked.
 
-- [Codex desktop](references/codex.md)
+## Things that are easy to get wrong
+
+- **Copying a live SQLite DB file** (or its `-wal`/`-shm` separately) can produce an inconsistent copy; use a backup/snapshot. Other engines need their own dump/restore. Emulator state (e.g. Wrangler/Miniflare `.wrangler/state`) spans many files and isn't snapshot-safe — initializing via the project's migrations is usually the better answer.
+- **Hook-driven setup runs repeatedly** (every session start/resume, possibly every `cd`) and may run in the main checkout or concurrently. It must be idempotent, cheap when already done, retry after failure, and never clobber local edits.
+- **Native config only takes effect from the branch new worktrees are created from** — usually after it's committed and pushed.
+- **Running a helper by hand doesn't prove the agent triggers it.** Report helper tests and native integration separately.
+- Agent docs and observed behavior drift. When syntax, variables, or lifecycle timing matter, check the official docs linked in the references.
+
+## References
+
+Read only the ones for the agents in scope. They hold mechanisms, doc links, and observed caveats — not steps to follow.
+
 - [Claude Code](references/claude.md)
+- [Codex desktop](references/codex.md)
 - [Cursor](references/cursor.md)
 
-Verify current official documentation when adapter syntax, variables, or lifecycle behavior is uncertain. Existing repository files are examples, not proof of universal support. Quote all paths and serialize JSON/TOML rather than building unsafe shell strings.
+[scripts/setup_worktree.py](scripts/setup_worktree.py) is an optional helper (Python stdlib only) that copies selected repo-relative files into a destination checkout, takes consistent SQLite snapshots, refuses traversal/symlinks, and preserves existing destination files; see `--help`. Copy it into the repo if it fits; write something native to the project if it doesn't.
 
-Prefer simple native configuration for simple file copying. Where commands or database snapshots need shared logic, copy `scripts/setup_worktree.py` from this skill into the target repository at `scripts/setup_worktree.py` (or an existing appropriate scripts directory). Configure adapters to invoke that repository copy with explicit absolute source and destination roots. Do not make generated hooks depend on the personal skill installation path.
+## Done means
 
-The helper accepts repeatable `--env`, `--sqlite`, and `--optional-file` arguments containing exact repository-relative paths. It rejects path traversal and symlinks, preserves existing destinations, and fails for missing required files. Optional files may be absent. It copies env files with private permissions and creates SQLite snapshots through the backup API. `--dry-run` reports paths and operations without copying. It does not install dependencies, rewrite env values, or initialize databases.
-
-Run it through an available Python runtime; use `uv run` when the repository requires uv. Do not install packages into system Python. Do not introduce a new runtime silently if the repository lacks it; explain the requirement or implement equivalent behavior with existing tools (for example, a small Node script in a JavaScript repository that needs no SQLite snapshots).
-
-When an agent hook triggers setup, the helper alone is not enough. A repository wrapper (or the equivalent script) must also no-op in the main checkout, skip work already done, run the selected install and initialization commands, and retry after a failure. See the Claude adapter for the details.
-
-Example invocation (replace files and roots with the user's selections):
-
-```sh
-uv run scripts/setup_worktree.py \
-  --source "$SOURCE_ROOT" --destination "$WORKTREE_ROOT" \
-  --env .env.local --sqlite app.db
-```
-
-Preserve local files when setup runs again. Required missing files should fail clearly; optional files should report a skip. Copy secrets as files, never embed their contents into committed configuration. Ensure selected secrets, snapshots, and temporary backup artifacts remain ignored. Merge ignore rules narrowly, retaining tracked env examples. For SQLite, do not copy `-wal` and `-shm` independently or add a live database to Claude's native include list; use a consistent snapshot. Other engines need their own supported dump/restore workflow, not this helper. Emulator state such as Wrangler/Miniflare's `.wrangler/state` spreads one app's data across several hash-named SQLite files plus blob directories (D1, R2, KV, Durable Objects); a per-file snapshot is not a consistent copy. Prefer initializing it with the project's migration command, and explain that test accounts or data then need to be recreated.
-
-Check the runtime database URL and launch commands for isolation. An env file pointing at remote Turso or a fixed localhost port is not made isolated by copying a DB file. If needed, agree on worktree-local URLs and distinct ports; persist adjustments in the destination without altering the source or logging secrets. Do not launch a database or dev server merely to validate config.
-
-Keep wtp or other managers optional. Update them only if requested, preserving their repository conventions. Document selected files, setup commands, required runtimes, missing-file behavior, and how to rerun setup in the repository's existing worktree documentation.
-
-## Verify and deliver
-
-Parse edited configuration and check the intended changes against the original. Verify the shared helper in a disposable local fixture/worktree using dummy env values and a small test database. Check paths containing spaces, reruns preserving destination edits, required versus optional missing files, and a SQLite snapshot with committed data still in WAL. Check a destination database's integrity and confirm the source remains unchanged. Never use real secret contents or production data in a fixture.
-
-Separate helper verification from native integration: report whether each selected agent actually triggered setup. A manually executed helper does not prove the agent lifecycle works. If app integration cannot be exercised, preserve the artifacts and state that limitation.
-
-Deliver the changed paths, selected behavior, validation results, and any required app UI step. State when native setup only takes effect after the configuration reaches the branch new worktrees are created from. Do not commit or push unless requested.
+The setup has been exercised as far as the environment allows (e.g. a disposable worktree with dummy data — never real secrets), and the user gets: what changed, what each agent will do on worktree creation, how to rerun setup manually, what was verified versus not, and any UI step or commit needed for it to take effect. Document the setup wherever the repo already documents development workflow.

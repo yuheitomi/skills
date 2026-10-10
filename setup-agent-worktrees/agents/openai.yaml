@@ -1,4 +1,4 @@
 interface:
   display_name: "Set Up Agent Worktrees"
   short_description: "Configure agent worktrees, env files, and DB snapshots"
-  default_prompt: "Use $setup-agent-worktrees to inspect this repository, ask which agents and local files to support, and configure worktree setup."
+  default_prompt: "Use $setup-agent-worktrees to assess this repository and configure what new agent worktrees need to be ready to work in."
