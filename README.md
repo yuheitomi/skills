@@ -9,7 +9,7 @@ Personal [Agent Skills](https://docs.claude.com/en/docs/claude-code/skills) for 
 | [commit](commit/SKILL.md) | Splits pending changes into logical chunks and commits them with conventional commit messages. |
 | [create-pr](create-pr/SKILL.md) | Commits changes in logical chunks, creates a feature branch when on `main`, pushes, and opens a pull request. |
 | [gh-issue](gh-issue/SKILL.md) | Drafts a GitHub issue (bug or feature request), reviews it with you, then creates it with `gh`. |
-| [setup-agent-worktrees](setup-agent-worktrees/SKILL.md) | Configures worktree setup for Codex desktop, Claude Code, and Cursor: copies selected env files, snapshots local SQLite databases, and runs setup commands. |
+| [setup-agent-worktrees](setup-agent-worktrees/SKILL.md) | Configures worktree setup for Codex desktop, Claude Code, and Cursor so new agent worktrees are ready to work in. Assesses the project to decide which env files, dependencies, and local data a worktree needs. |
 | [setup-vite-config](setup-vite-config/SKILL.md) | Sets up or updates `vite.config.ts` (vite-plus build, lint, format, test, pre-commit), pnpm workspace settings, and Zed settings for React projects — SPA, React Router v8, or TanStack Start on Cloudflare Workers. |
 
 ## Installation
